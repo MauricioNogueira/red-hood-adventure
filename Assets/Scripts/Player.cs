@@ -39,12 +39,6 @@ public class Player : MonoBehaviour
         {
             Move();
             Jump();
-            
-            /**if (PisarNoInimigo() && this.impulso)
-            {
-                Debug.Log("Dar impulso");
-                rb.AddForce(new Vector2(0f, 10f), ForceMode2D.Impulse);
-            }*/
         }
     }
 
