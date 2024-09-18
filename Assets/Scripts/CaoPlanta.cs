@@ -10,21 +10,31 @@ public class CaoPlanta : MonoBehaviour
     private Animator animator;
     private int direction = -1;
     private float stopDistance = 0.1f;
+    private Collider2D boxColliderBody;
+    private bool stateAction = true;
+    private SpriteRenderer spriteRenderer;
+    private bool morreAoPularNaCabeca = true;
 
     public float velocidadeMovimento;
+    public float distanciaAPercorrer = 5f;
 
     // Start is called before the first frame update
     void Start()
     {
         rg2d = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
+        boxColliderBody = GetComponent<Collider2D>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
         this.targetPosition = transform.position;
     }
 
     // Update is called once per frame
     void Update()
     {
-        Move();
+        if (stateAction)
+        {
+            Move();
+        }
     }
 
     void Move()
@@ -44,9 +54,17 @@ public class CaoPlanta : MonoBehaviour
         }
     }
 
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag == "Pe")
+        {
+            Die();
+        }
+    }
+
     void GerarNovoDestino()
     {
-        this.targetPosition = transform.position + new Vector3((5f * this.direction), 0f, 0f);
+        this.targetPosition = transform.position + new Vector3((distanciaAPercorrer * this.direction), 0f, 0f);
         ChangeDirectionSprite();
         //Debug.Log("Direção atual do cão planta: " + this.direction);
     }
@@ -66,9 +84,6 @@ public class CaoPlanta : MonoBehaviour
 
     bool isDestino()
     {
-        // Mover o inimigo em direção ao alvo
-        //transform.position = Vector3.MoveTowards(transform.position, targetPosition, velocidadeMovimento * Time.deltaTime);
-
         // Verificar se chegou ao destino
         if (Vector3.Distance(transform.position, targetPosition) <= stopDistance)
         {
@@ -78,5 +93,20 @@ public class CaoPlanta : MonoBehaviour
         }
 
         return false;
+    }
+
+    void AnimationDamage()
+    {
+        boxColliderBody.enabled = false;
+        spriteRenderer.enabled = false;
+
+        Destroy(gameObject, 2f);
+    }
+
+    void Die()
+    {
+        animator.SetBool("damage", true);
+        stateAction = false;
+        Invoke("AnimationDamage", 0.3f);
     }
 }

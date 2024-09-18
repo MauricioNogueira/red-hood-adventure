@@ -7,13 +7,13 @@ public class Player : MonoBehaviour
 {
     public float speed;
     public float jumpForce;
-    public float focaDeRecuoDoDano;
     public Collider2D colliderFrontal;
 
     private Rigidbody2D rb;
     private Animator animator;
 
     public LayerMask groundLayer;
+    public LayerMask inimigoLayer;
     private bool isGrounded;
 
     public Vector2 boxSize;
@@ -22,9 +22,6 @@ public class Player : MonoBehaviour
     private BoxCollider2D boxColliderPlayer;
 
     private bool stateAction = true;
-
-
-    private Collider2D colliderInimigo;
 
     // Start is called before the first frame update
     void Start()
@@ -42,6 +39,12 @@ public class Player : MonoBehaviour
         {
             Move();
             Jump();
+            
+            /**if (PisarNoInimigo() && this.impulso)
+            {
+                Debug.Log("Dar impulso");
+                rb.AddForce(new Vector2(0f, 10f), ForceMode2D.Impulse);
+            }*/
         }
     }
 
@@ -111,22 +114,19 @@ public class Player : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.tag != "Inimigo")
+        {
+            Debug.Log("Não é mais inimigo");
+        }
+    }
+
+    /**private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.tag == "Inimigo")
         {
             TakeDamage(collision);
-
-            float direcao = transform.eulerAngles.y;
-
-            float valorForca = focaDeRecuoDoDano;
-
-            if (direcao == 180f)
-            {
-                valorForca *= -1;
-            }
-
-            rb.AddForce(new Vector2(valorForca, focaDeRecuoDoDano), ForceMode2D.Impulse);
         }
     }
 
@@ -134,27 +134,64 @@ public class Player : MonoBehaviour
     {
         if (collision.gameObject.tag == "Inimigo")
         {
+            Debug.Log("Colidiu com o inimigo");
             this.colliderInimigo = collision;
             Invoke("RemoveDamage", 0.3f);
         }
-    }
+    }*/
 
-    void TakeDamage(Collider2D collision)
+    public void TakeDamage(Collider2D collision, float forcaDeRecuoDoDano)
     {
         Physics2D.IgnoreCollision(collision, boxColliderPlayer, true);
         Physics2D.IgnoreCollision(collision, colliderFrontal, true);
         Debug.Log("Player tomou dano");
         animator.SetBool("damage", true);
         this.stateAction = false;
+
+        float direcao = transform.eulerAngles.y;
+
+        float valorForca = forcaDeRecuoDoDano;
+
+        if (direcao == 180f)
+        {
+            valorForca *= -1;
+        }
+
+        rb.AddForce(new Vector2(valorForca, forcaDeRecuoDoDano), ForceMode2D.Impulse);
     }
 
-    void RemoveDamage()
+    void RemoveDamage(Collider2D collision)
     {
-        Physics2D.IgnoreCollision(this.colliderInimigo, boxColliderPlayer, false);
-        Physics2D.IgnoreCollision(this.colliderInimigo, colliderFrontal, false);
+        Physics2D.IgnoreCollision(collision, boxColliderPlayer, false);
+        Physics2D.IgnoreCollision(collision, colliderFrontal, false);
         animator.SetBool("damage", false);
         this.stateAction = true;
         Debug.Log("Remove damage");
-        this.colliderInimigo = null;
+        //this.colliderInimigo = null;
+    }
+
+    /**bool PisarNoInimigo()
+    {
+        RaycastHit2D hit = Physics2D.BoxCast(transform.position, boxSize, 0, -transform.up, 0.25f, inimigoLayer);
+
+        if (hit.collider != null)
+        {
+            Debug.Log("Pisando no inimigo");
+            return true;
+        }
+
+        return false;
+    }*/
+
+    IEnumerator Cron(float time, Collider2D collision)
+    {
+        yield return new WaitForSeconds(time);
+
+        RemoveDamage(collision);
+    }
+
+    public void Teste(float time, Collider2D collision)
+    {
+        StartCoroutine(Cron(time, collision));
     }
 }
