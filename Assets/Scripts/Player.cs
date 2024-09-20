@@ -13,7 +13,6 @@ public class Player : MonoBehaviour
     private Animator animator;
 
     public LayerMask groundLayer;
-    public LayerMask inimigoLayer;
     private bool isGrounded;
 
     public Vector2 boxSize;
@@ -22,6 +21,17 @@ public class Player : MonoBehaviour
     private BoxCollider2D boxColliderPlayer;
 
     private bool stateAction = true;
+    private SpriteRenderer spriteRenderer;
+
+    public static Player player;
+    public bool invencibilidade = false;
+
+
+
+    //Teste
+
+    public Vector2 posicaoRaycast;
+    public float dist;
 
     // Start is called before the first frame update
     void Start()
@@ -29,6 +39,8 @@ public class Player : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         boxColliderPlayer = GetComponent<BoxCollider2D>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        player = this;
         //rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
     }
 
@@ -46,6 +58,8 @@ public class Player : MonoBehaviour
     void Move()
     {
         float movimento = Input.GetAxis("Horizontal");
+
+        //ColisaoRaycast(movimento);
 
         if (movimento != 0)
         {
@@ -72,7 +86,8 @@ public class Player : MonoBehaviour
 
         if (isGrounded && jumpPress)
         {
-            rb.AddForce(new Vector2(0f, jumpForce), ForceMode2D.Impulse);
+            //rb.AddForce(new Vector2(0f, jumpForce), ForceMode2D.Impulse);
+            Impulso(0f, jumpForce);
         }
 
         animator.SetBool("jump", !this.isGrounded);
@@ -82,6 +97,8 @@ public class Player : MonoBehaviour
     bool IsGrounded()
     {
         RaycastHit2D hit2 = Physics2D.BoxCast(transform.position, boxSize, 0, -transform.up, castDistance, groundLayer);
+
+        //Debug.DrawRay(transform.position - transform.up * castDistance, -transform.up, Color.red);
 
         if (hit2.collider != null && rb.velocity.y == 0)
         {
@@ -110,38 +127,29 @@ public class Player : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.tag != "Inimigo")
+        /**if (collision.gameObject.CompareTag("CabecaInimigo"))
         {
-            Debug.Log("Não é mais inimigo");
-        }
+            
+            CaoPlanta c = collision.gameObject.GetComponentInParent<CaoPlanta>();
+            Debug.Log(c);
+        }*/
     }
 
-    /**private void OnTriggerEnter2D(Collider2D collision)
+    // Método para testar o Raycast
+    void ColisaoRaycast(float direcao)
     {
-        if (collision.gameObject.tag == "Inimigo")
+        RaycastHit2D hit = Physics2D.Raycast(posicaoRaycast, Vector3.down, dist, groundLayer);
+
+        Debug.DrawRay(posicaoRaycast, Vector2.down * dist, Color.red);
+
+        if (hit.collider!=null)
         {
-            TakeDamage(collision);
+            Debug.Log("Toquei neste objeto: " + hit.collider.gameObject.name);
         }
     }
-
-    private void OnTriggerExit2D(Collider2D collision)
-    {
-        if (collision.gameObject.tag == "Inimigo")
-        {
-            Debug.Log("Colidiu com o inimigo");
-            this.colliderInimigo = collision;
-            Invoke("RemoveDamage", 0.3f);
-        }
-    }*/
 
     public void TakeDamage(Collider2D collision, float forcaDeRecuoDoDano)
     {
-        Physics2D.IgnoreCollision(collision, boxColliderPlayer, true);
-        Physics2D.IgnoreCollision(collision, colliderFrontal, true);
-        Debug.Log("Player tomou dano");
-        animator.SetBool("damage", true);
-        this.stateAction = false;
-
         float direcao = transform.eulerAngles.y;
 
         float valorForca = forcaDeRecuoDoDano;
@@ -151,33 +159,24 @@ public class Player : MonoBehaviour
             valorForca *= -1;
         }
 
-        rb.AddForce(new Vector2(valorForca, forcaDeRecuoDoDano), ForceMode2D.Impulse);
+        Vector2 forcaImpulso = new Vector2(valorForca, forcaDeRecuoDoDano);
+        rb.AddForce(forcaImpulso, ForceMode2D.Impulse);
+        Debug.Log("Player tomou dano");
+        animator.SetBool("damage", true);
+        this.stateAction = false;
+
+        StartCoroutine(RemoverAcaoDano(0.3f, collision));
+
     }
 
     void RemoveDamage(Collider2D collision)
     {
-        Physics2D.IgnoreCollision(collision, boxColliderPlayer, false);
-        Physics2D.IgnoreCollision(collision, colliderFrontal, false);
         animator.SetBool("damage", false);
         this.stateAction = true;
         Debug.Log("Remove damage");
-        //this.colliderInimigo = null;
     }
 
-    /**bool PisarNoInimigo()
-    {
-        RaycastHit2D hit = Physics2D.BoxCast(transform.position, boxSize, 0, -transform.up, 0.25f, inimigoLayer);
-
-        if (hit.collider != null)
-        {
-            Debug.Log("Pisando no inimigo");
-            return true;
-        }
-
-        return false;
-    }*/
-
-    IEnumerator Cron(float time, Collider2D collision)
+    IEnumerator RemoverAcaoDano(float time, Collider2D collision)
     {
         yield return new WaitForSeconds(time);
 
@@ -186,6 +185,24 @@ public class Player : MonoBehaviour
 
     public void Teste(float time, Collider2D collision)
     {
-        StartCoroutine(Cron(time, collision));
+        StartCoroutine(RemoverAcaoDano(time, collision));
+    }
+
+    public void Impulso(float x, float y)
+    {
+        rb.AddForce(new Vector2(x, y), ForceMode2D.Impulse);
+    }
+
+
+    IEnumerator InvencibilidadeTemporaria(float delay)
+    {
+        invencibilidade = true;
+        yield return new WaitForSeconds(delay);
+        invencibilidade = false;
+    }
+
+    public void DefesaTemporaria(float time)
+    {
+        StartCoroutine(InvencibilidadeTemporaria(time));
     }
 }

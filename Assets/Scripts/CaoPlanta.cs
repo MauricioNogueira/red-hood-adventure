@@ -13,7 +13,6 @@ public class CaoPlanta : MonoBehaviour
     private Collider2D boxColliderBody;
     private bool stateAction = true;
     private SpriteRenderer spriteRenderer;
-    private bool morreAoPularNaCabeca = true;
 
     public float velocidadeMovimento;
     public float distanciaAPercorrer = 5f;
@@ -54,12 +53,28 @@ public class CaoPlanta : MonoBehaviour
         }
     }
 
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Player") && !Player.player.invencibilidade)
+        {
+            Player.player.TakeDamage(collision.collider, 3f);
+        }
+    }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.tag == "Pe")
         {
-            Die();
+            //Die();
+            Debug.Log("Inimigo levou dano e impulso no inimigo");
+            Player.player.Impulso(0f, 8f);
+            Player.player.DefesaTemporaria(0.3f);
         }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        
     }
 
     void GerarNovoDestino()
