@@ -26,13 +26,6 @@ public class Player : MonoBehaviour
     public static Player player;
     public bool invencibilidade = false;
 
-
-
-    //Teste
-
-    public Vector2 posicaoRaycast;
-    public float dist;
-
     // Start is called before the first frame update
     void Start()
     {
@@ -47,6 +40,7 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        //BoxHead();
         if (stateAction)
         {
             Move();
@@ -135,32 +129,16 @@ public class Player : MonoBehaviour
         }*/
     }
 
-    // Método para testar o Raycast
-    void ColisaoRaycast(float direcao)
+    public void TakeDamage(Collider2D collision, float forcaDeRecuoDoDano, int dir)
     {
-        RaycastHit2D hit = Physics2D.Raycast(posicaoRaycast, Vector3.down, dist, groundLayer);
-
-        Debug.DrawRay(posicaoRaycast, Vector2.down * dist, Color.red);
-
-        if (hit.collider!=null)
-        {
-            Debug.Log("Toquei neste objeto: " + hit.collider.gameObject.name);
-        }
-    }
-
-    public void TakeDamage(Collider2D collision, float forcaDeRecuoDoDano)
-    {
-        float direcao = transform.eulerAngles.y;
+        //float direcao = transform.eulerAngles.y;
 
         float valorForca = forcaDeRecuoDoDano;
 
-        if (direcao == 180f)
-        {
-            valorForca *= -1;
-        }
+        valorForca *= dir;
 
         Vector2 forcaImpulso = new Vector2(valorForca, forcaDeRecuoDoDano);
-        rb.AddForce(forcaImpulso, ForceMode2D.Impulse);
+        //Impulso(valorForca, forcaDeRecuoDoDano);
         Debug.Log("Player tomou dano");
         animator.SetBool("damage", true);
         this.stateAction = false;
@@ -173,7 +151,7 @@ public class Player : MonoBehaviour
     {
         animator.SetBool("damage", false);
         this.stateAction = true;
-        Debug.Log("Remove damage");
+        DefesaTemporaria(3f);
     }
 
     IEnumerator RemoverAcaoDano(float time, Collider2D collision)
@@ -197,12 +175,29 @@ public class Player : MonoBehaviour
     IEnumerator InvencibilidadeTemporaria(float delay)
     {
         invencibilidade = true;
+        Physics2D.IgnoreLayerCollision(8, 9, true);
         yield return new WaitForSeconds(delay);
         invencibilidade = false;
+        Physics2D.IgnoreLayerCollision(8, 9, false);
     }
 
     public void DefesaTemporaria(float time)
     {
         StartCoroutine(InvencibilidadeTemporaria(time));
+    }
+
+    public GameObject GetColliderFoot()
+    {
+        return GameObject.FindGameObjectWithTag("Pe");
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        //Debug.Log(collision.tag);
+    }
+
+    public Rigidbody2D GetRigidbody2D()
+    {
+        return rb;
     }
 }

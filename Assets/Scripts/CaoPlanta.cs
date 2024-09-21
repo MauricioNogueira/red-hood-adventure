@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.Burst.CompilerServices;
+using UnityEditor;
 using UnityEngine;
 
 public class CaoPlanta : MonoBehaviour
@@ -17,6 +19,13 @@ public class CaoPlanta : MonoBehaviour
     public float velocidadeMovimento;
     public float distanciaAPercorrer = 5f;
 
+    [Header(" ------------------ Raycast Head Enemy --------------------")]
+    public Vector2 boxSizeHead;
+    public float boxDistanceCentro;
+    public LayerMask layerPlayer;
+    public GameObject rayHead;
+    private bool isTakeHit = false;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -30,6 +39,8 @@ public class CaoPlanta : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        VerificarSeTomouDanoNaCabeca();
+
         if (stateAction)
         {
             Move();
@@ -57,24 +68,30 @@ public class CaoPlanta : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Player") && !Player.player.invencibilidade)
         {
-            Player.player.TakeDamage(collision.collider, 3f);
+            Player.player.TakeDamage(collision.collider, 3f, this.direction);
+            Debug.Log("Deu dano no player");
         }
+    }
+
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        Debug.Log(collision.gameObject.tag);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.gameObject.tag == "Pe")
+        /**if (collision.gameObject.tag == "Pe")
         {
             //Die();
-            Debug.Log("Inimigo levou dano e impulso no inimigo");
+            //Debug.Log("Inimigo levou dano e impulso no inimigo");
             Player.player.Impulso(0f, 8f);
             Player.player.DefesaTemporaria(0.3f);
-        }
+        }*/
     }
 
     private void OnTriggerExit2D(Collider2D collision)
     {
-        
+        //Debug.Log(collision.gameObject.tag);
     }
 
     void GerarNovoDestino()
@@ -123,5 +140,49 @@ public class CaoPlanta : MonoBehaviour
         animator.SetBool("damage", true);
         stateAction = false;
         Invoke("AnimationDamage", 0.3f);
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.DrawWireCube(rayHead.transform.position, boxSizeHead);    
+    }
+
+    void VerificarSeTomouDanoNaCabeca()
+    {
+        RaycastHit2D hit = Physics2D.BoxCast(rayHead.transform.position, boxSizeHead, 0, transform.up, boxDistanceCentro, layerPlayer);
+
+        Vector3 vectorStart = rayHead.transform.position;
+        Vector3 vectorEnd = vectorStart + Vector3.up * boxDistanceCentro;
+
+        if (hit.collider != null && hit.collider.gameObject.CompareTag("Pe"))
+        {
+            TakeDamage(hit);
+            Debug.DrawLine(vectorStart, vectorEnd, Color.red);
+        }
+        else
+        {
+            Debug.DrawLine(vectorStart, vectorEnd, Color.green);
+        }
+    }
+
+    IEnumerator ExecutarAcao(float time)
+    {
+        isTakeHit = true;
+        Debug.Log("Mudou isTakeHit para " + isTakeHit);
+        Player.player.Impulso(0f, 14f);
+        //Player.player.DefesaTemporaria(0.3f);
+        yield return new WaitForSeconds(time);
+        isTakeHit = false;
+        Debug.Log("Mudou isTakeHit para " + isTakeHit);
+    }
+
+    void TakeDamage(RaycastHit2D hit)
+    {
+        Debug.Log(hit.distance);
+        if (!isTakeHit && Player.player.GetRigidbody2D().velocity.y < 0)
+        {
+            StartCoroutine(ExecutarAcao(0.05f));
+            Debug.Log("Colidiu com a tag " + hit.collider.gameObject.tag);
+        }
     }
 }
