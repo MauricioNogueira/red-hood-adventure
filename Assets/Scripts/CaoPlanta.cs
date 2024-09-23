@@ -149,7 +149,7 @@ public class CaoPlanta : MonoBehaviour
 
     void VerificarSeTomouDanoNaCabeca()
     {
-        RaycastHit2D hit = Physics2D.BoxCast(rayHead.transform.position, boxSizeHead, 0, transform.up, boxDistanceCentro, layerPlayer);
+        RaycastHit2D hit = Physics2D.BoxCast(rayHead.transform.position, boxSizeHead, 180, transform.up, boxDistanceCentro, layerPlayer);
 
         Vector3 vectorStart = rayHead.transform.position;
         Vector3 vectorEnd = vectorStart + Vector3.up * boxDistanceCentro;
@@ -178,7 +178,6 @@ public class CaoPlanta : MonoBehaviour
 
     void TakeDamage(RaycastHit2D hit)
     {
-        Debug.Log(hit.distance);
         if (!isTakeHit && Player.player.GetRigidbody2D().velocity.y < 0)
         {
             StartCoroutine(ExecutarAcao(0.05f));

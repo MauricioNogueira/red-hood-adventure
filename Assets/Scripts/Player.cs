@@ -7,7 +7,6 @@ public class Player : MonoBehaviour
 {
     public float speed;
     public float jumpForce;
-    public Collider2D colliderFrontal;
 
     private Rigidbody2D rb;
     private Animator animator;
@@ -24,7 +23,23 @@ public class Player : MonoBehaviour
     private SpriteRenderer spriteRenderer;
 
     public static Player player;
+
+    [Header(" ------------------ Controle de Invencibilidade --------------------")]
+    [Tooltip("Cor que o sprite irá renderizar ao tomar dano")]
+    public Color corInvencivel;
+
+    [Tooltip("Tempo em segundos que o player irá fica invencível")]
+    public float tempoInvencibilidade = 3f;
+
+    [Tooltip("Define se o player irá ficar invencível")]
     public bool invencibilidade = false;
+
+    [Tooltip("Tempo que define a troca de cores do sprite")]
+    public float tempoTransicao = 0.05f;
+
+    private float contagem;
+    private int posicaoCor = 0;
+    private float acumuladorTempo = 0;
 
     // Start is called before the first frame update
     void Start()
@@ -34,13 +49,17 @@ public class Player : MonoBehaviour
         boxColliderPlayer = GetComponent<BoxCollider2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         player = this;
+        contagem = tempoTransicao;
         //rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
     }
 
     // Update is called once per frame
     void Update()
     {
-        //BoxHead();
+        if (invencibilidade)
+        {
+            AplicarEfeitoInvencivel();
+        }
         if (stateAction)
         {
             Move();
@@ -119,16 +138,6 @@ public class Player : MonoBehaviour
         }
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        /**if (collision.gameObject.CompareTag("CabecaInimigo"))
-        {
-            
-            CaoPlanta c = collision.gameObject.GetComponentInParent<CaoPlanta>();
-            Debug.Log(c);
-        }*/
-    }
-
     public void TakeDamage(Collider2D collision, float forcaDeRecuoDoDano, int dir)
     {
         //float direcao = transform.eulerAngles.y;
@@ -161,11 +170,6 @@ public class Player : MonoBehaviour
         RemoveDamage(collision);
     }
 
-    public void Teste(float time, Collider2D collision)
-    {
-        StartCoroutine(RemoverAcaoDano(time, collision));
-    }
-
     public void Impulso(float x, float y)
     {
         rb.AddForce(new Vector2(x, y), ForceMode2D.Impulse);
@@ -186,18 +190,49 @@ public class Player : MonoBehaviour
         StartCoroutine(InvencibilidadeTemporaria(time));
     }
 
-    public GameObject GetColliderFoot()
-    {
-        return GameObject.FindGameObjectWithTag("Pe");
-    }
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        //Debug.Log(collision.tag);
-    }
-
     public Rigidbody2D GetRigidbody2D()
     {
         return rb;
+    }
+
+    IEnumerator ChangeColorPlayer(float time)
+    {
+        yield return new WaitForSeconds(time);
+        spriteRenderer.color = Color.red;
+        yield return new WaitForSeconds(time);
+        spriteRenderer.color = Color.white;
+    }
+
+    void AplicarEfeitoInvencivel()
+    {
+        Color[] colors = { corInvencivel, Color.white };
+
+        contagem -= Time.deltaTime;
+        acumuladorTempo += Time.deltaTime;
+
+        if (acumuladorTempo <= tempoInvencibilidade)
+        {
+            if (contagem <= 0)
+            {
+                spriteRenderer.color = colors[posicaoCor];
+                contagem = tempoTransicao;
+
+                if (posicaoCor == 0)
+                {
+                    posicaoCor = 1;
+                }
+                else
+                {
+                    posicaoCor = 0;
+                }
+            }
+        }
+        else
+        {
+            spriteRenderer.color = Color.white;
+            acumuladorTempo = 0;
+            contagem = tempoTransicao;
+            Debug.Log("Fim da invencibilidade");
+        }
     }
 }
