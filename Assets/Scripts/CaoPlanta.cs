@@ -19,6 +19,8 @@ public class CaoPlanta : MonoBehaviour
     public float velocidadeMovimento;
     public float distanciaAPercorrer = 5f;
 
+    public GameObject efeitoDestruicao;
+
     [Header(" ------------------ Raycast Head Enemy --------------------")]
     public Vector2 boxSizeHead;
     public float boxDistanceCentro;
@@ -168,19 +170,22 @@ public class CaoPlanta : MonoBehaviour
     IEnumerator ExecutarAcao(float time)
     {
         isTakeHit = true;
-        Debug.Log("Mudou isTakeHit para " + isTakeHit);
+        stateAction = false;
         Player.player.Impulso(0f, 14f);
+        spriteRenderer.enabled = false;
+        boxColliderBody.enabled = false;
+        efeitoDestruicao.SetActive(true);
         //Player.player.DefesaTemporaria(0.3f);
         yield return new WaitForSeconds(time);
+        Destroy(gameObject);
         isTakeHit = false;
-        Debug.Log("Mudou isTakeHit para " + isTakeHit);
     }
 
     void TakeDamage(RaycastHit2D hit)
     {
         if (!isTakeHit && Player.player.GetRigidbody2D().velocity.y < 0)
         {
-            StartCoroutine(ExecutarAcao(0.05f));
+            StartCoroutine(ExecutarAcao(0.12f));
             Debug.Log("Colidiu com a tag " + hit.collider.gameObject.tag);
         }
     }
